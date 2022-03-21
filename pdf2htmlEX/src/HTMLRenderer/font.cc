@@ -486,11 +486,10 @@ void HTMLRenderer::embed_font(const string & filepath, GfxFont * font, FontInfo 
             else
             {
                 ffw_reencode_glyph_order();
-                if(FoFiTrueType * fftt = FoFiTrueType::load((char*)filepath.c_str()))
+                if(std::unique_ptr<FoFiTrueType>  fftt = FoFiTrueType::load((char*)filepath.c_str()))
                 {
-                    code2GID = font_8bit->getCodeToGIDMap(fftt);
+                    code2GID = font_8bit->getCodeToGIDMap(fftt.get());
                     code2GID_len = 256;
-                    delete fftt;
                 }
             }
         }
@@ -553,10 +552,9 @@ void HTMLRenderer::embed_font(const string & filepath, GfxFont * font, FontInfo 
             else
             {
                 // use the mapping stored in the file
-                if(FoFiTrueType * fftt = FoFiTrueType::load((char*)filepath.c_str()))
+                if(std::unique_ptr<FoFiTrueType> fftt = FoFiTrueType::load((char*)filepath.c_str()))
                 {
-                    code2GID = _font->getCodeToGIDMap(fftt, &code2GID_len);
-                    delete fftt;
+                    code2GID = _font->getCodeToGIDMap(fftt.get(), &code2GID_len);
                 }
             }
         }
@@ -910,7 +908,7 @@ const FontInfo * HTMLRenderer::install_font(GfxFont * font)
      * which does not make much sense in our case
      * If we specify false here, font_loc->locType cannot be gfxFontLocResident
      */
-    if(auto * font_loc = font->locateFont(xref, nullptr))
+    if(auto font_loc = font->locateFont(xref, nullptr))
     {
         switch(font_loc -> locType)
         {
@@ -927,8 +925,7 @@ const FontInfo * HTMLRenderer::install_font(GfxFont * font)
                 cerr << "TODO: other font loc" << endl;
                 export_remote_default_font(new_fn_id);
                 break;
-        }      
-        delete font_loc;
+        }
     }
     else
     {
@@ -965,15 +962,14 @@ void HTMLRenderer::install_external_font(GfxFont * font, FontInfo & info)
         cerr << "Warning: workaround for font names in bad encodings." << endl;
     }
 
-    GfxFontLoc * localfontloc = font->locateFont(xref, nullptr);
+    auto  localfontloc = font->locateFont(xref, nullptr);
 
     if(param.embed_external_font)
     {
-        if(localfontloc != nullptr)
+        if(localfontloc)
         {
-            embed_font(string(localfontloc->path->toStr()), font, info);
+            embed_font(string(localfontloc->path), font, info);
             export_remote_font(info, param.font_format, font);
-            delete localfontloc;
             return;
         }
         else
@@ -984,11 +980,10 @@ void HTMLRenderer::install_external_font(GfxFont * font, FontInfo & info)
     }
 
     // still try to get an idea of read ascent/descent
-    if(localfontloc != nullptr)
+    if(localfontloc)
     {
         // fill in ascent/descent only, do not embed
-        embed_font(string(localfontloc->path->toStr()), font, info, true);
-        delete localfontloc;
+        embed_font(string(localfontloc->path), font, info, true);
     }
     else
     {

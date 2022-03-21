@@ -8,7 +8,8 @@
 
 export PDF2HTMLEX_VERSION=0.18.8.rc2
 
-export POPPLER_VERSION=poppler-0.89.0
+export POPPLER_VERSION=poppler-22.03.0
+#export POPPLER_VERSION=poppler-0.89.0
 #export POPPLER_VERSION=poppler-0.88.0
 #export POPPLER_VERSION=poppler-0.87.0
 #export POPPLER_VERSION=poppler-0.86.1
@@ -22,7 +23,8 @@ export POPPLER_VERSION=poppler-0.89.0
 # see: https://github.com/fontforge/fontforge/releases
 # current working: 20190801
 
-export FONTFORGE_VERSION=20200314
+export FONTFORGE_VERSION=20220308
+#export FONTFORGE_VERSION=20200314
 #export FONTFORGE_VERSION=20190801
 #export FONTFORGE_VERSION=20190413
 #export FONTFORGE_VERSION=20190413

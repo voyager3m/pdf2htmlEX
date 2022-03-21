@@ -78,7 +78,7 @@ struct HTMLRenderer : OutputDev
     HTMLRenderer(const char* progPath, Param & param);
     virtual ~HTMLRenderer();
 
-    void process(PDFDoc * doc);
+    void process(PDFDoc *doc);
 
     ////////////////////////////////////////////////////
     // OutputDev interface

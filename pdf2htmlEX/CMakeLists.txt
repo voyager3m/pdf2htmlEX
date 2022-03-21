@@ -106,6 +106,7 @@ set(PDF2HTMLEX_LIBS ${PDF2HTMLEX_LIBS}
   -pthread
   -lz
   -lm
+  -lgobject-2.0
 )
 
 # debug build flags (overwrite default cmake debug flags)
@@ -130,9 +131,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual")
 if(CYGWIN)
 # was: set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++0x")
 # the following change is untested:
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++17")
 else()
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -pthread")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -pthread")
 endif()
 
 # check the C++11 features we need
