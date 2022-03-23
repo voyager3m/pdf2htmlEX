@@ -70,7 +70,7 @@ find $DEBDIR -type f | xargs md5sum > $md5sumsFile
 #
 versionValue=$PDF2HTMLEX_VERSION.$PDF2HTMLEX_BRANCH.$BUILD_DIST.$BUILD_DATE
 architectureValue=$(dpkg-architecture -q DEB_BUILD_ARCH_CPU)
-maintainerValue="$(git config --get user.name) <$(git config --get user.email)>"
+maintainerValue="voyager3m (voyager3m@gmail.com)"
 
 # Now create the control file
 #
