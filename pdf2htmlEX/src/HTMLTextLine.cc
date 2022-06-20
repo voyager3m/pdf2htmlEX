@@ -10,9 +10,13 @@
 #include <algorithm>
 
 #include "HTMLTextLine.h"
-
+#include "Base64Stream.h"
 #include "util/encoding.h"
 #include "util/css_const.h"
+#include <cwchar>
+#include <locale>
+#include <string>
+#include <sstream>
 
 namespace pdf2htmlEX {
 
@@ -36,6 +40,10 @@ HTMLTextLine::HTMLTextLine (const HTMLLineState & line_state, const Param & para
 
 void HTMLTextLine::append_unicodes(const Unicode * u, int l, double width)
 {
+    for (int i = 0; i < l; i++) {
+        ucs4_text.push_back(u[i]);
+    }
+    
     if (l == 1) 
         text.push_back(min(u[0], (unsigned)INT_MAX));
     else if (l > 1)
@@ -137,7 +145,46 @@ void HTMLTextLine::dump_chars(ostream & out, int begin, int len)
         out << "</span>";
 }
 
-void HTMLTextLine::dump_text(ostream & out)
+
+
+// dump outline
+void HTMLTextLine::dump_outline(std::ostream &out, OutlineRecMap *outline, int pagenum)
+{
+    if (outline && outline->find(pagenum) != outline->end()) {
+        
+        OutlineRecVec& items = outline->find(pagenum)->second;
+        double z = param.zoom > 0.01 ? param.zoom : 1.;
+        //double fz = states[0].font_size * (72.0/param.text_dpi) * z;
+        double line_left = line_state.x - clip_x1;
+        double line_top = line_state.y - clip_y1 ; //+ fz - clip_y1;
+
+        for (auto  i = items.begin(); i != items.end(); ++i) {
+            // ?? if (abs(line_left - out_left) < 5. && abs(line_top - out_top) < 5.) {
+             if ( i->left < 0.0001 && i->top < 0.0001 && i->text.size() > 0) {
+                if (std::equal(i->text.begin(), i->text.end(), ucs4_text.begin())) {
+                    std::istringstream sstr(i->title);
+                    //printf("EQ %1d %d %s \n", i->level, pagenum, i->title.c_str());
+                    //outline->at(pagenum).at.size();
+                    i->text.clear();
+                    out << " data-outline-level=\"H" << i->level << "\" data-outline-title=\"" << Base64Stream(sstr) << "\"";
+                }
+            } else {
+                double out_left = i->left * z;
+                double out_top = i->top * z;
+                if (abs(line_left - out_left) < 5. &&  out_top > line_top && out_top < (line_top + ascent)) {
+                    std::istringstream sstr(i->title);
+                    //printf("OK deep=%d %s\n", i->level, i->title.c_str());
+                    out << " data-outline-level=\"H" << i->level << "\" data-outline-title=\"" << Base64Stream(sstr) << "\"";
+                    //printf("apply outline: %f,%f,%d,%d, %s\n", out_left,out_top,i.level,pagenum,i.title.c_str());
+                }
+            } 
+            //printf("dest[l%f t%f] line[l%f t%f] f%f\n", out_left, out_top, line_left, line_top, fz);
+        }
+    }
+}
+
+// dump_text
+void HTMLTextLine::dump_text(ostream & out, PDFDoc *doc, int pagenum, OutlineRecMap *outline_recs)
 {
     /*
      * Each Line is an independent absolute positioned block
@@ -161,8 +208,11 @@ void HTMLTextLine::dump_text(ostream & out)
             << " " << CSS::HEIGHT_CN           << all_manager.height.install(ascent)
             << " " << CSS::BOTTOM_CN           << all_manager.bottom.install(line_state.y - clip_y1)
             ;
-        // it will be closed by the first state
+            // it will be closed by the first state
+
     }
+
+    dump_outline(out, outline_recs, pagenum);
 
     std::vector<State*> stack;
     // a special safeguard in the bottom

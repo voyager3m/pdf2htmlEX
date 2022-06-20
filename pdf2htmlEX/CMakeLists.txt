@@ -223,6 +223,8 @@ set(PDF2HTMLEX_SRC ${PDF2HTMLEX_SRC}
     src/StringFormatter.cc
     src/TmpFiles.h
     src/TmpFiles.cc
+    src/OutlineRec.h
+    src/OutlineRec.cc
     )
 
 add_executable(pdf2htmlEX ${PDF2HTMLEX_SRC})

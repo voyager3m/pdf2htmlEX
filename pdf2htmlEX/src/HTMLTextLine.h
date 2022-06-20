@@ -9,11 +9,12 @@
 #include <vector>
 
 #include <CharTypes.h>
-
 #include "Param.h"
 #include "StateManager.h"
 #include "HTMLState.h"
-
+#include <PDFDoc.h>
+#include <Outline.h>
+#include "OutlineRec.h"
 namespace pdf2htmlEX {
 
 /*
@@ -85,7 +86,7 @@ public:
     void append_padding_char() { text.push_back(0); }
     void append_offset(double width);
     void append_state(const HTMLTextState & text_state);
-    void dump_text(std::ostream & out);
+    void dump_text(std::ostream & out, PDFDoc *doc, int pagenum, OutlineRecMap *outline_recs);
 
     bool text_empty(void) const { return text.empty(); }
     void clear(void);
@@ -108,6 +109,11 @@ private:
     void dump_chars(std::ostream & out, int begin, int len);
     void dump_char(std::ostream & out, int pos);
 
+    /*
+     * outline info processing
+     */
+    void dump_outline(std::ostream &out, OutlineRecMap *outline, int pagenum);
+
     const Param & param;
     AllStateManager & all_manager;
 
@@ -128,6 +134,7 @@ private:
      */
     std::vector<int> text;
     std::vector<std::vector<Unicode> > decomposed_text;
+    std::vector<Unicode> ucs4_text;
 };
 
 } // namespace pdf2htmlEX

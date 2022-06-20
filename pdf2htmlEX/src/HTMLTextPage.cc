@@ -7,11 +7,15 @@
  */
 
 #include "HTMLTextPage.h"
+#include "OutlineRec.h"
 #include "util/css_const.h"
+#include "Base64Stream.h"
+#include <sstream>
 
 namespace pdf2htmlEX {
 
 using std::ostream;
+using std::ostringstream;
 
 HTMLTextPage::HTMLTextPage(const Param & param, AllStateManager & all_manager)
     : param(param)
@@ -27,7 +31,7 @@ HTMLTextPage::~HTMLTextPage()
         delete p;
 }
 
-void HTMLTextPage::dump_text(ostream & out)
+void HTMLTextPage::dump_text(ostream & out, PDFDoc *doc, int pagenum, OutlineRecMap *outline_recs)
 {
     if(param.optimize_text)
     {
@@ -52,7 +56,7 @@ void HTMLTextPage::dump_text(ostream & out)
 
     Clip cur_clip(page_box, 0);
     bool has_clip = false;
-
+    std::ostringstream loc;
     auto text_line_iter = text_lines.begin();
     for(auto clip_iter = clips.begin(); clip_iter != clips.end(); ++clip_iter)
     {
@@ -62,11 +66,11 @@ void HTMLTextPage::dump_text(ostream & out)
             const auto & cs = cur_clip.clip_state;
             if(has_clip)
             {
-                out << "<div class=\"" << CSS::CLIP_CN
+                loc << "<div class=\"" << CSS::CLIP_CN
                     << " " << CSS::LEFT_CN   << all_manager.left.install(cs.xmin)
                     << " " << CSS::BOTTOM_CN << all_manager.bottom.install(cs.ymin)
                     << " " << CSS::WIDTH_CN  << all_manager.width.install(cs.xmax - cs.xmin)
-                    << " " << CSS::HEIGHT_CN << all_manager.height.install(cs.ymax - cs.ymin)
+                    << " " << CSS::HEIGHT_CN << all_manager.height.install(cs.ymax - cs.ymin) 
                     << "\">";
             }
 
@@ -76,15 +80,30 @@ void HTMLTextPage::dump_text(ostream & out)
                 {
                     (*text_line_iter)->clip(cs);
                 }
-                (*text_line_iter)->dump_text(out);
+                (*text_line_iter)->dump_text(loc, doc, pagenum, outline_recs);
                 ++text_line_iter;
             }
             if(has_clip)
             {
-                out << "</div>";
+                loc << "</div>";
             }
         }
 
+        if (outline_recs && outline_recs->find(pagenum) != outline_recs->end()) {
+            // save outlines without coords
+            OutlineRecVec& items = outline_recs->find(pagenum)->second;
+            for (auto  i = items.begin(); i != items.end(); ++i) {
+                if ( i->left < 0.0001 && i->top < 0.0001 && i->text.size() > 0) {
+                    std::istringstream sstr(i->title);
+                    out << "<div style=\"display:none;\" "
+                        << "data-outline-level=\"H" << i->level << "\" "
+                        << "data-outline-title=\"" << Base64Stream(sstr) << "\" "
+                        << "data-outline-independent></div>";
+                }
+            }
+        }
+
+        out << loc.str();
         {
             cur_clip = *clip_iter;
             const auto & cs = cur_clip.clip_state;

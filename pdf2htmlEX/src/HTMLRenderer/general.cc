@@ -96,6 +96,8 @@ HTMLRenderer::~HTMLRenderer()
 
 #define MAX_DIMEN 9000
 
+
+
 void HTMLRenderer::process(PDFDoc *doc)
 {
     cur_doc = doc;
@@ -103,6 +105,11 @@ void HTMLRenderer::process(PDFDoc *doc)
     xref = doc->getXRef();
 
     pre_process(doc);
+
+    /* get outline records */
+    if (doc && doc->getOutline()) {
+        dump_outline(&outline_recs, doc->getOutline()->getItems(), param.first_page, param.last_page, 1);
+    }
 
     ///////////////////
     // Process pages
@@ -255,7 +262,7 @@ void HTMLRenderer::endPage() {
     }
 
     // dump all text
-    html_text_page.dump_text(*f_curpage);
+    html_text_page.dump_text(*f_curpage, cur_doc, pageNum, &outline_recs);
     html_text_page.dump_css(f_css.fs);
     html_text_page.clear();
 
@@ -608,5 +615,84 @@ void HTMLRenderer::embed_file(ostream & out, const string & path, const string &
 }
 
 const std::string HTMLRenderer::MANIFEST_FILENAME = "manifest";
+
+std::string HTMLRenderer::UnicodeToUTF8(const Unicode *str, int len)
+{
+    typedef std::codecvt<char32_t,char,std::mbstate_t> facet_type;
+    std::string result;
+    std::locale mylocale;
+    const facet_type& myfacet = std::use_facet<facet_type>(mylocale);
+
+    // prepare objects to be filled by codecvt::out :
+    char* pstr= new char [(len+1) * 5];        // the destination buffer
+    std::mbstate_t mystate = std::mbstate_t(); // the shift state object
+    const char32_t* pwc;                        // from_next
+    char* pc;                                  // to_next
+
+    // call codecvt::out (translate characters):
+    facet_type::result myresult = myfacet.out (mystate,
+        (const char32_t *)str, (const char32_t *)str + len , pwc,
+        pstr, pstr+len*5, pc);
+
+    if (myresult==facet_type::ok) {
+        result = std::string((const char *)pstr, pc - pstr);;
+    }
+
+    delete[] pstr;
+    return result;
+}
+
+
+
+
+// dump-outline
+void HTMLRenderer::dump_outline(std::map<int, std::vector<OutlineRec>> *outline, const std::vector<OutlineItem *> *items, int firstpage, int lastpage, int deep)
+{
+    if (items && outline && items->size() > 0) {
+        for (auto i : *items) {
+            auto act = i->getAction();
+            if (act && act->getKind() == LinkActionKind::actionGoTo)   {
+
+                auto * link =  dynamic_cast<const LinkGoTo*>(act);
+                std::unique_ptr<LinkDest> dest = nullptr;
+                if(auto _ = link->getDest()) {
+                    dest = std::unique_ptr<LinkDest>(new LinkDest(*_));
+                } else if (auto _ = link->getNamedDest()) {
+                    dest = cur_catalog->findDest(_);
+                }
+
+                if (dest) {
+                    int pagenum = 0;
+                    if (dest->isPageRef()) {
+                        auto pageref = dest->getPageRef();
+                        pagenum = cur_catalog->findPage(pageref);
+                    } else {
+                        pagenum = dest->getPageNum();
+                    }
+
+                    if (pagenum >= firstpage && pagenum <= lastpage) {
+                        OutlineRec rec {0.000001, 0.000001};
+                        rec.title = UnicodeToUTF8(i->getTitle(), i->getTitleLength());
+                        rec.level = deep;
+                        if (dest->getKind() == destXYZ) {
+                            rec.left    = dest->getLeft();
+                            rec.top     = dest->getTop();
+                        }
+                        rec.add_text(i->getTitle(), i->getTitleLength());
+                        (*outline)[pagenum].push_back(rec);
+                        //printf("get outline record: x=%f y=%f l=%d pagenum=%d title=%s\n", rec.left, rec.top, deep, pagenum, rec.title.c_str());
+                    }
+                    dest.reset();
+                }
+            }
+            
+            /* check for kids */
+            if (i->hasKids()) {
+                dump_outline(outline, i->getKids(), firstpage, lastpage, deep+1);
+            }
+        }
+    }
+}
+
 
 }// namespace pdf2htmlEX

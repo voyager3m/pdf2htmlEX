@@ -18,6 +18,7 @@
 #include <PDFDoc.h>
 #include <Outline.h>
 
+
 /************ from goo/gtypes.h ***************/
 // #include <goo/gtypes.h>
 
@@ -62,7 +63,7 @@
 #include "Color.h"
 #include "StateManager.h"
 #include "HTMLTextPage.h"
-
+#include "OutlineRec.h"
 #include "BackgroundRenderer/BackgroundRenderer.h"
 #include "CoveredTextDetector.h"
 #include "DrawingTracer.h"
@@ -72,6 +73,7 @@
 
 
 namespace pdf2htmlEX {
+
 
 struct HTMLRenderer : OutputDev
 {
@@ -192,6 +194,7 @@ struct HTMLRenderer : OutputDev
     // Currently drawn char (glyph) count in current page.
     int get_char_count() { return (int)covered_text_detector.get_chars_covered().size(); }
 
+
 protected:
     ////////////////////////////////////////////////////
     // misc
@@ -207,6 +210,9 @@ protected:
     void set_stream_flags (std::ostream & out);
 
     void dump_css(void);
+
+    static std::string UnicodeToUTF8(const Unicode *str, int len);
+    void dump_outline(OutlineRecMap *outline, const std::vector<OutlineItem *> *items, int firstpage, int lastpage, int deep = 0);
 
     // convert a LinkAction to a string that our Javascript code can understand
     std::string get_linkaction_str(const LinkAction *, std::string & detail);
@@ -374,6 +380,8 @@ protected:
     } f_outline, f_pages, f_css;
     std::ofstream * f_curpage;
     std::string cur_page_filename;
+
+    OutlineRecMap outline_recs;
 
     static const std::string MANIFEST_FILENAME;
 

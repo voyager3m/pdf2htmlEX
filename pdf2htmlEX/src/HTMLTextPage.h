@@ -13,6 +13,9 @@
 #include "StateManager.h"
 #include "HTMLTextLine.h"
 #include "HTMLState.h"
+#include <PDFDoc.h>
+#include "OutlineRec.h"
+
 
 namespace pdf2htmlEX {
 
@@ -29,7 +32,7 @@ public:
 
     HTMLTextLine * get_cur_line(void) const { return cur_line; }
 
-    void dump_text(std::ostream & out);
+    void dump_text(std::ostream & out, PDFDoc *doc, int pagenum, OutlineRecMap *outline_recs);
     void dump_css(std::ostream & out);
     void clear(void);
 
@@ -41,6 +44,7 @@ public:
 
     double get_width() { return page_width; }
     double get_height() { return page_height; }
+
 
 private:
     void optimize(void);
