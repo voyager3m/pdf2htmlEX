@@ -95,9 +95,9 @@ void HTMLRenderer::drawString(GfxState * state, const GooString * s)
             char buf[2];
             buf[0] = (code >> 8) & 0xff;
             buf[1] = (code & 0xff);
-            width = ((GfxCIDFont *)font)->getWidth(buf, 2);
+            width = std::dynamic_pointer_cast<GfxCIDFont>(font)->getWidth(buf, 2);
         } else {
-            width = ((Gfx8BitFont *)font)->getWidth(code);
+            width = std::dynamic_pointer_cast<Gfx8BitFont>(font)->getWidth(code);
         }
 
         if (width == 0 || height == 0) {

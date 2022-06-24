@@ -8,7 +8,8 @@
 
 export PDF2HTMLEX_VERSION=0.18.8.rc2
 
-export POPPLER_VERSION=poppler-22.03.0
+export POPPLER_VERSION=poppler-22.06.0
+#export POPPLER_VERSION=poppler-22.03.0
 #export POPPLER_VERSION=poppler-0.89.0
 #export POPPLER_VERSION=poppler-0.88.0
 #export POPPLER_VERSION=poppler-0.87.0

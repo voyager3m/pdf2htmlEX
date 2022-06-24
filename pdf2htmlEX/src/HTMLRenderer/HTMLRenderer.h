@@ -231,15 +231,15 @@ protected:
      * local font: to be substituted with a local (client side) font
      */
     ////////////////////////////////////////////////////
-    std::string dump_embedded_font(GfxFont * font, FontInfo & info);
-    std::string dump_type3_font(GfxFont * font, FontInfo & info);
-    void embed_font(const std::string & filepath, GfxFont * font, FontInfo & info, bool get_metric_only = false);
-    const FontInfo * install_font(GfxFont * font);
-    void install_embedded_font(GfxFont * font, FontInfo & info);
-    void install_external_font (GfxFont * font, FontInfo & info);
-    void export_remote_font(const FontInfo & info, const std::string & suffix, GfxFont * font);
+    std::string dump_embedded_font(const std::shared_ptr<GfxFont> font, FontInfo & info);
+    std::string dump_type3_font(const std::shared_ptr<GfxFont> font, FontInfo & info);
+    void embed_font(const std::string & filepath, const std::shared_ptr<GfxFont> font, FontInfo & info, bool get_metric_only = false);
+    const FontInfo * install_font(const std::shared_ptr<GfxFont>);
+    void install_embedded_font(const std::shared_ptr<GfxFont> font, FontInfo & info);
+    void install_external_font (const std::shared_ptr<GfxFont> font, FontInfo & info);
+    void export_remote_font(const FontInfo & info, const std::string & suffix, const std::shared_ptr<GfxFont> font);
     void export_remote_default_font(long long fn_id);
-    void export_local_font(const FontInfo & info, GfxFont * font, const std::string & original_font_name, const std::string & cssfont);
+    void export_local_font(const FontInfo & info, const std::shared_ptr<GfxFont> font, const std::string & original_font_name, const std::string & cssfont);
 
     // depending on --embed***, to embed the content or add a link to it
     // "type": specify the file type, usually it's the suffix, in which case this parameter could be ""

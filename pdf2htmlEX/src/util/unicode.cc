@@ -36,11 +36,11 @@ Unicode map_to_private(CharCode code)
     return private_mapping;
 }
 
-Unicode unicode_from_font (CharCode code, GfxFont * font)
+Unicode unicode_from_font (CharCode code, const std::shared_ptr<GfxFont> font)
 {
     if(!font->isCIDFont())
     {
-        auto * font2 = dynamic_cast<Gfx8BitFont*>(font);
+        auto font2 = std::static_pointer_cast<Gfx8BitFont>(font);
         assert(font2 != nullptr);
         const char * cname = font2->getCharName(code);
         // may be untranslated ligature
@@ -55,7 +55,7 @@ Unicode unicode_from_font (CharCode code, GfxFont * font)
     return map_to_private(code);
 }
 
-Unicode check_unicode(Unicode const * u, int len, CharCode code, GfxFont * font)
+Unicode check_unicode(Unicode const * u, int len, CharCode code, const std::shared_ptr<GfxFont> font)
 {
     if(len == 0)
         return map_to_private(code);

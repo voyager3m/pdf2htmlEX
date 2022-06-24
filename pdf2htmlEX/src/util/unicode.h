@@ -76,14 +76,14 @@ inline bool is_illegal_unicode(Unicode c)
 Unicode map_to_private(CharCode code);
 
 /* * Try to determine the Unicode value directly from the information in the font */
-Unicode unicode_from_font (CharCode code, GfxFont * font);
+Unicode unicode_from_font (CharCode code, const std::shared_ptr<GfxFont> font);
 
 /*
  * We have to use a single Unicode value to reencode fonts
  * if we got multi-unicode values, it might be expanded ligature, try to restore it
  * if we cannot figure it out at the end, use a private mapping
  */
-Unicode check_unicode(Unicode const * u, int len, CharCode code, GfxFont * font);
+Unicode check_unicode(Unicode const * u, int len, CharCode code, const std::shared_ptr<GfxFont> font);
 
 
 } // namespace pdf2htmlEX

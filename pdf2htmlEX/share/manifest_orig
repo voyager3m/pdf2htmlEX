@@ -17,6 +17,7 @@
 # Declaration - Do not modify
 """
 <!DOCTYPE html>
+<!-- Created by pdf2htmlEX (https://github.com/pdf2htmlEX/pdf2htmlEX) -->
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta charset="utf-8"/>
@@ -30,7 +31,7 @@
 @base.min.css
 
 # fancy CSS styles - Optional
-#@fancy.min.css
+@fancy.min.css
 
 # PDF specific CSS styles - Do not modify
 $css
@@ -42,7 +43,7 @@ $css
 # compatibility.min.js, extracted from PDF.js
 # To support old browsers like IE9
 #TEST_IGNORE_BEGIN
-#@compatibility.min.js
+@compatibility.min.js
 #TEST_IGNORE_END
 
 # entry point of pdf2htmlEX.Viewer
@@ -53,14 +54,14 @@ $css
 #   'key_handler' : false 
 # });
 #TEST_IGNORE_BEGIN
-#@pdf2htmlEX.min.js
-#"""
-#<script>
-#try{
-#  pdf2htmlEX.defaultViewer = new pdf2htmlEX.Viewer({});
-#}catch(e){}
-#</script>
-#"""
+@pdf2htmlEX.min.js
+"""
+<script>
+try{
+  pdf2htmlEX.defaultViewer = new pdf2htmlEX.Viewer({});
+}catch(e){}
+</script>
+"""
 #TEST_IGNORE_END
 
 
@@ -80,30 +81,30 @@ $css
 # <div id="sidebar" class="opened">
 
 #TEST_IGNORE_BEGIN
-#"""
-#<div id="sidebar">
-#"""
+"""
+<div id="sidebar">
+"""
 # container of outlines
-#"""
-#<div id="outline">
-#"""
-#$outline
-#"""
-#</div>
-#</div>
-#"""
+"""
+<div id="outline">
+"""
+$outline
+"""
+</div>
+</div>
+"""
 #TEST_IGNORE_END
 
 #############
 # The container of PDF pages
 # check base.css for an example and requirements of its CSS styles
 """
-#<div id="page-container"/>
+<div id="page-container">
 """
-#$pages
-#"""
-#</div>
-#"""
+$pages
+"""
+</div>
+"""
 
 #############
 # The loading indicator
@@ -112,13 +113,13 @@ $css
 # The 'active' class will be added when it is used
 
 #TEST_IGNORE_BEGIN
-#"""
-#<div class="loading-indicator">
-#"""
-#@pdf2htmlEX-64x64.png
-#"""
-#</div>
-#"""
+"""
+<div class="loading-indicator">
+"""
+@pdf2htmlEX-64x64.png
+"""
+</div>
+"""
 #TEST_IGNORE_END
 
 #############

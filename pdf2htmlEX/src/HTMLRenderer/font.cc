@@ -47,7 +47,7 @@ using std::unordered_set;
 using std::cerr;
 using std::endl;
 
-string HTMLRenderer::dump_embedded_font (GfxFont * font, FontInfo & info)
+string HTMLRenderer::dump_embedded_font (const std::shared_ptr<GfxFont> font, FontInfo & info)
 {
     if(info.is_type3)
         return dump_type3_font(font, info);
@@ -191,7 +191,7 @@ string HTMLRenderer::dump_embedded_font (GfxFont * font, FontInfo & info)
     return filepath;
 }
 
-string HTMLRenderer::dump_type3_font (GfxFont * font, FontInfo & info)
+string HTMLRenderer::dump_type3_font (const std::shared_ptr<GfxFont> font, FontInfo & info)
 {
     assert(info.is_type3);
 
@@ -201,7 +201,7 @@ string HTMLRenderer::dump_type3_font (GfxFont * font, FontInfo & info)
     FT_Library ft_lib;
     FT_Init_FreeType(&ft_lib);
     CairoFontEngine font_engine(ft_lib); 
-    auto * cur_font = font_engine.getFont(font, cur_doc, true, xref);
+    auto  cur_font = font_engine.getFont(font, cur_doc, true, xref);
     auto used_map = preprocessor.get_code_map(hash_ref(font->getID()));
 
     //calculate transformed metrics
@@ -249,7 +249,7 @@ string HTMLRenderer::dump_type3_font (GfxFont * font, FontInfo & info)
         double ox, oy;
         ox = oy = 0.0;
 
-        auto glyph_width = ((Gfx8BitFont*)font)->getWidth(code);
+        auto glyph_width = (std::dynamic_pointer_cast<Gfx8BitFont>(font))->getWidth(code);
 
 #if 1
         {
@@ -386,7 +386,7 @@ void output_map_file_header(std::ostream& out) {
 
 } // namespace
 
-void HTMLRenderer::embed_font(const string & filepath, GfxFont * font, FontInfo & info, bool get_metric_only)
+void HTMLRenderer::embed_font(const string & filepath, const std::shared_ptr<GfxFont> font, FontInfo & info, bool get_metric_only)
 {
     if(param.debug)
     {
@@ -407,8 +407,8 @@ void HTMLRenderer::embed_font(const string & filepath, GfxFont * font, FontInfo 
     int code2GID_len = 0;
     int maxcode = 0;
 
-    Gfx8BitFont * font_8bit = nullptr;
-    GfxCIDFont * font_cid = nullptr;
+    std::shared_ptr<Gfx8BitFont>  font_8bit = nullptr;
+    std::shared_ptr<GfxCIDFont>   font_cid = nullptr;
 
     string suffix = get_suffix(filepath);
     for(auto & c : suffix)
@@ -433,11 +433,11 @@ void HTMLRenderer::embed_font(const string & filepath, GfxFont * font, FontInfo 
 
     if(!font->isCIDFont())
     {
-        font_8bit = dynamic_cast<Gfx8BitFont*>(font);
+        font_8bit = std::dynamic_pointer_cast<Gfx8BitFont>(font);
     }
     else
     {
-        font_cid = dynamic_cast<GfxCIDFont*>(font);
+        font_cid = std::dynamic_pointer_cast<GfxCIDFont>(font);
     }
 
     if(get_metric_only)
@@ -539,7 +539,7 @@ void HTMLRenderer::embed_font(const string & filepath, GfxFont * font, FontInfo 
         {
             ffw_reencode_glyph_order();
 
-            GfxCIDFont * _font = dynamic_cast<GfxCIDFont*>(font);
+            auto _font = std::dynamic_pointer_cast<GfxCIDFont>(font);
             assert(_font != nullptr);
 
             // To locate CID2GID for the font
@@ -836,7 +836,7 @@ void HTMLRenderer::embed_font(const string & filepath, GfxFont * font, FontInfo 
 }
 
 
-const FontInfo * HTMLRenderer::install_font(GfxFont * font)
+const FontInfo * HTMLRenderer::install_font(const std::shared_ptr<GfxFont> font)
 {
     assert(sizeof(long long) == 2*sizeof(int));
                 
@@ -876,7 +876,7 @@ const FontInfo * HTMLRenderer::install_font(GfxFont * font)
     {
         cerr << "Install font " << hex << new_fn_id << dec
             << ": (" << (font->getID()->num) << ' ' << (font->getID()->gen) << ") " 
-            << (font->getName() ? font->getName()->toStr() : "")
+            << (font->getName() ? font->getName()->c_str() : "")
             << endl;
     }
 
@@ -935,7 +935,7 @@ const FontInfo * HTMLRenderer::install_font(GfxFont * font)
     return &new_font_info;
 }
 
-void HTMLRenderer::install_embedded_font(GfxFont * font, FontInfo & info)
+void HTMLRenderer::install_embedded_font(const std::shared_ptr<GfxFont> font, FontInfo & info)
 {
     auto path = dump_embedded_font(font, info);
 
@@ -950,9 +950,9 @@ void HTMLRenderer::install_embedded_font(GfxFont * font, FontInfo & info)
     }
 }
 
-void HTMLRenderer::install_external_font(GfxFont * font, FontInfo & info)
+void HTMLRenderer::install_external_font(const std::shared_ptr<GfxFont> font, FontInfo & info)
 {
-    string fontname(font->getName()->toStr());
+    string fontname(font->getName()->c_str());
 
     // resolve bad encodings in GB
     auto iter = GB_ENCODED_FONT_NAME_MAP.find(fontname); 
@@ -994,7 +994,7 @@ void HTMLRenderer::install_external_font(GfxFont * font, FontInfo & info)
     export_local_font(info, font, fontname, "");
 }
 
-void HTMLRenderer::export_remote_font(const FontInfo & info, const string & format, GfxFont * font)
+void HTMLRenderer::export_remote_font(const FontInfo & info, const string & format, const std::shared_ptr<GfxFont> font)
 {
     string css_turn_off_ligatures = "";
     if (param.turn_off_ligatures) {
@@ -1066,7 +1066,7 @@ void HTMLRenderer::export_remote_font(const FontInfo & info, const string & form
              << endl;
 }
 
-static string general_font_family(GfxFont * font)
+static string general_font_family(const std::shared_ptr<GfxFont> font)
 {
     if(font->isFixedWidth())
         return "monospace";
@@ -1082,7 +1082,7 @@ void HTMLRenderer::export_remote_default_font(long long fn_id)
     f_css.fs << "." << CSS::FONT_FAMILY_CN << fn_id << "{font-family:sans-serif;visibility:hidden;}" << endl;
 }
 
-void HTMLRenderer::export_local_font(const FontInfo & info, GfxFont * font, const string & original_font_name, const string & cssfont) 
+void HTMLRenderer::export_local_font(const FontInfo & info, const std::shared_ptr<GfxFont> font, const string & original_font_name, const string & cssfont) 
 {
     f_css.fs << "." << CSS::FONT_FAMILY_CN << info.id << "{";
     f_css.fs << "font-family:" << ((cssfont == "") ? (original_font_name + "," + general_font_family(font)) : cssfont) << ";";

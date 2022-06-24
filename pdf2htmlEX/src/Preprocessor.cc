@@ -67,7 +67,7 @@ void Preprocessor::drawChar(GfxState *state, double x, double y,
       double originX, double originY,
       CharCode code, int nBytes, const Unicode *u, int uLen)
 {
-    GfxFont * font = state->getFont();
+    auto font = state->getFont();
     if(!font) return;
 
     long long fn_id = hash_ref(font->getID());

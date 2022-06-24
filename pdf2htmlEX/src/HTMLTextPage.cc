@@ -56,7 +56,7 @@ void HTMLTextPage::dump_text(ostream & out, PDFDoc *doc, int pagenum, OutlineRec
 
     Clip cur_clip(page_box, 0);
     bool has_clip = false;
-    std::ostringstream loc;
+    //std::ostringstream loc;
     auto text_line_iter = text_lines.begin();
     for(auto clip_iter = clips.begin(); clip_iter != clips.end(); ++clip_iter)
     {
@@ -66,7 +66,7 @@ void HTMLTextPage::dump_text(ostream & out, PDFDoc *doc, int pagenum, OutlineRec
             const auto & cs = cur_clip.clip_state;
             if(has_clip)
             {
-                loc << "<div class=\"" << CSS::CLIP_CN
+                out << "<div class=\"" << CSS::CLIP_CN
                     << " " << CSS::LEFT_CN   << all_manager.left.install(cs.xmin)
                     << " " << CSS::BOTTOM_CN << all_manager.bottom.install(cs.ymin)
                     << " " << CSS::WIDTH_CN  << all_manager.width.install(cs.xmax - cs.xmin)
@@ -80,12 +80,12 @@ void HTMLTextPage::dump_text(ostream & out, PDFDoc *doc, int pagenum, OutlineRec
                 {
                     (*text_line_iter)->clip(cs);
                 }
-                (*text_line_iter)->dump_text(loc, doc, pagenum, outline_recs);
+                (*text_line_iter)->dump_text(out, doc, pagenum, outline_recs);
                 ++text_line_iter;
             }
             if(has_clip)
             {
-                loc << "</div>";
+                out << "</div>";
             }
         }
 
@@ -103,7 +103,7 @@ void HTMLTextPage::dump_text(ostream & out, PDFDoc *doc, int pagenum, OutlineRec
             }
         }
 
-        out << loc.str();
+        //out << loc.str();
         {
             cur_clip = *clip_iter;
             const auto & cs = cur_clip.clip_state;
