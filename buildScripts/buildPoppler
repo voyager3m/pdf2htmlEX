@@ -27,7 +27,7 @@ cmake                                       \
   -DENABLE_GOBJECT_INTROSPECTION=OFF        \
   -DENABLE_GTK_DOC=OFF                      \
   -DENABLE_QT5=OFF                          \
-  -DENABLE_LIBOPENJPEG="none"               \
+  -DENABLE_LIBOPENJPEG="unmaintained"       \
   -DENABLE_CMS="none"                       \
   -DENABLE_DCTDECODER="libjpeg"             \
   -DENABLE_LIBCURL=OFF                      \
