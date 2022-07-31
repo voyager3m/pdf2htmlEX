@@ -1,8 +1,30 @@
 #include "Base64Stream.h"
+#include <sstream>
 
 namespace pdf2htmlEX {
 
 using std::ostream;
+
+
+Base64Stream::Base64Stream(std::istream & in) : in(&in)
+{
+    need_clear = false;
+}
+
+
+Base64Stream::Base64Stream(const std::string  & str)
+{ 
+    in = new std::istringstream(str);
+    need_clear = true;
+}
+
+
+Base64Stream::~Base64Stream() {
+    if (in && need_clear) {
+        delete in;
+    }
+}
+
 
 ostream & Base64Stream::dumpto(ostream & out)
 {

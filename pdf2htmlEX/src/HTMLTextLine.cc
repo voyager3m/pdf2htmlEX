@@ -162,19 +162,17 @@ void HTMLTextLine::dump_outline(std::ostream &out, OutlineRecMap *outline, int p
             // ?? if (abs(line_left - out_left) < 5. && abs(line_top - out_top) < 5.) {
              if ( i->left < 0.0001 && i->top < 0.0001 && i->text.size() > 0) {
                 if (std::equal(i->text.begin(), i->text.end(), ucs4_text.begin())) {
-                    std::istringstream sstr(i->title);
                     //printf("EQ %1d %d %s \n", i->level, pagenum, i->title.c_str());
                     //outline->at(pagenum).at.size();
                     i->text.clear();
-                    out << " data-outline-level=\"H" << i->level << "\" data-outline-title=\"" << Base64Stream(sstr) << "\"";
+                    out << " data-outline-level=\"H" << i->level << "\" data-outline-title=\"" << Base64Stream(i->title) << "\"";
                 }
             } else {
                 double out_left = i->left * z;
                 double out_top = i->top * z;
                 if (abs(line_left - out_left) < 5. &&  out_top > line_top && out_top < (line_top + ascent)) {
-                    std::istringstream sstr(i->title);
                     //printf("OK deep=%d %s\n", i->level, i->title.c_str());
-                    out << " data-outline-level=\"H" << i->level << "\" data-outline-title=\"" << Base64Stream(sstr) << "\"";
+                    out << " data-outline-level=\"H" << i->level << "\" data-outline-title=\"" << Base64Stream(i->title) << "\"";
                     //printf("apply outline: %f,%f,%d,%d, %s\n", out_left,out_top,i.level,pagenum,i.title.c_str());
                 }
             } 
@@ -202,8 +200,14 @@ void HTMLTextLine::dump_text(ostream & out, PDFDoc *doc, int pagenum, OutlineRec
     // Start Output
     {
         // open <div> for the current text line
-        out << "<div " ;
+        out << "<div" ;
         dump_outline(out, outline_recs, pagenum);
+
+        // dump tags
+        for (auto &i: mcitems) {
+            i.dump(out, true);
+        }
+
         out << " class=\"" << CSS::LINE_CN
             << " " << CSS::TRANSFORM_MATRIX_CN << all_manager.transform_matrix.install(line_state.transform_matrix)
             << " " << CSS::LEFT_CN             << all_manager.left.install(line_state.x - clip_x1)
@@ -211,7 +215,6 @@ void HTMLTextLine::dump_text(ostream & out, PDFDoc *doc, int pagenum, OutlineRec
             << " " << CSS::BOTTOM_CN           << all_manager.bottom.install(line_state.y - clip_y1)
             ;
             // it will be closed by the first state
-
     }
 
     
@@ -785,4 +788,54 @@ const char * const HTMLTextLine::State::css_class_names [] = {
     CSS::VERTICAL_ALIGN_CN,
 };
 
+
+// setMCItem
+void HTMLTextLine::setMCItem(const MCItem &c_mcitem)
+{
+    mcitems.push_back(c_mcitem);
+}
+
+
+// add_parent
+void HTMLTextLine::MCItem::add_parent(const MCItem &item) 
+{
+    parent_type         = item.type;
+    parent_alt_text     = item.alt_text;
+    parent_summary      = item.summary;
+    parent_actual_text  = item.actual_text;   
+    parent_id           = item.id;
+}
+
+// dump
+void HTMLTextLine::MCItem::dump(ostream & out, bool print_parent)
+{
+    out << " data-tag-type=\"" << type << "\" ";
+    if (!alt_text.empty()) {
+        out << "data-tag-alttext=\"" << Base64Stream(alt_text) << "\" ";
+    }
+    if (!actual_text.empty()) {
+        out << "data-tag-actualtext=\"" << Base64Stream(actual_text) << "\" ";
+    }
+    if (!summary.empty()) {
+        out << "data-tag-summary=\"" << Base64Stream(summary) << "\" ";
+    }
+    if (print_parent && is_parent()) {
+        out << "data-tag-parent-type=\"" << parent_type << "\" ";
+        out << "data-tag-parent-id=\"" << parent_id << "\" ";
+        if (!parent_alt_text.empty()) {
+            out << "data-tag-partent-alttext=\"" << Base64Stream(parent_alt_text) << "\" ";
+        }
+        if (!parent_actual_text.empty()) {
+            out << "data-tag-parent-actualtext=\"" << Base64Stream(parent_actual_text) << "\" ";
+        }
+        if (!parent_summary.empty()) {
+            out << "data-tag-parent-summary=\"" << Base64Stream(parent_summary) << "\" ";
+        }
+    }
+}
+
+
 } //namespace pdf2htmlEX
+
+
+

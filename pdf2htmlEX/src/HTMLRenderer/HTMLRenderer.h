@@ -17,6 +17,8 @@
 #include <Stream.h>
 #include <PDFDoc.h>
 #include <Outline.h>
+#include <StructTreeRoot.h>
+#include <StructElement.h>
 
 
 /************ from goo/gtypes.h ***************/
@@ -176,11 +178,11 @@ struct HTMLRenderer : OutputDev
     virtual void eoFill(GfxState *state);
     virtual bool axialShadedFill(GfxState *state, GfxAxialShading *shading, double tMin, double tMax);
 
-  virtual void beginTransparencyGroup(GfxState * /*state*/, const double * /*bbox*/,
-                                      GfxColorSpace * /*blendingColorSpace*/,
-                                      bool /*isolated*/, bool /*knockout*/,
-                                      bool /*forSoftMask*/);
-  virtual void endTransparencyGroup(GfxState * /*state*/);
+    virtual void beginTransparencyGroup(GfxState * /*state*/, const double * /*bbox*/,
+                                        GfxColorSpace * /*blendingColorSpace*/,
+                                        bool /*isolated*/, bool /*knockout*/,
+                                        bool /*forSoftMask*/);
+    virtual void endTransparencyGroup(GfxState * /*state*/);
 
 
     virtual void processLink(AnnotLink * al);
@@ -194,6 +196,9 @@ struct HTMLRenderer : OutputDev
     // Currently drawn char (glyph) count in current page.
     int get_char_count() { return (int)covered_text_detector.get_chars_covered().size(); }
 
+
+    virtual void endMarkedContent(GfxState *state);
+    virtual void beginMarkedContent(const char *name, Dict *properties);
 
 protected:
     ////////////////////////////////////////////////////
@@ -213,6 +218,8 @@ protected:
 
     static std::string UnicodeToUTF8(const Unicode *str, int len);
     void dump_outline(OutlineRecMap *outline, const std::vector<OutlineItem *> *items, int firstpage, int lastpage, int deep = 0);
+    void parse_treeroot(const StructTreeRoot * treeroot, int firstpage, int lastpage);
+    void go_child (const StructElement *el, HTMLTextLine::MCItem parent_item);
 
     // convert a LinkAction to a string that our Javascript code can understand
     std::string get_linkaction_str(const LinkAction *, std::string & detail);
@@ -387,6 +394,8 @@ protected:
 
     CoveredTextDetector covered_text_detector;
     DrawingTracer tracer;
+    
+    std::map<int, HTMLTextLine::MCItem> mc_items;
 };
 
 } //namespace pdf2htmlEX

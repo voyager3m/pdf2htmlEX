@@ -111,6 +111,11 @@ void HTMLRenderer::process(PDFDoc *doc)
         dump_outline(&outline_recs, doc->getOutline()->getItems(), param.first_page, param.last_page, 1);
     }
 
+
+    if (doc && doc->getStructTreeRoot()) {
+        parse_treeroot(doc->getStructTreeRoot(), param.first_page, param.last_page);
+    }
+
     ///////////////////
     // Process pages
 
@@ -229,6 +234,7 @@ void HTMLRenderer::endPage() {
             << " " << CSS::WIDTH_CN << wid
             << " " << CSS::HEIGHT_CN << hid
             << "\">";
+
 
     /*
      * When split_pages is on, f_curpage points to the current page file
@@ -689,6 +695,109 @@ void HTMLRenderer::dump_outline(std::map<int, std::vector<OutlineRec>> *outline,
             /* check for kids */
             if (i->hasKids()) {
                 dump_outline(outline, i->getKids(), firstpage, lastpage, deep+1);
+            }
+        }
+    }
+}
+
+
+
+
+
+// go_child    
+void HTMLRenderer::go_child (const StructElement *el, HTMLTextLine::MCItem parent_item)
+{
+    int mcid = el->getMCID();
+    HTMLTextLine::MCItem item;
+    // static int level = 0;
+    // level++;    
+    // cerr << std::string(level * 2, ' ') << "mcid=" << el->getMCID()  << " type=" << el->getTypeName() << " numchild=" << el->getNumChildren() << " " ;
+    // for (unsigned i = 0; i < el->getNumAttributes(); i++) {
+    //     auto attr =  el->getAttribute(i);
+    //     auto v = attr->getValue();
+    //     cerr << attr->getTypeName() << "=[(" << v->getTypeName() << ") ";
+    //     v->print(stderr);
+    //     cerr << "] ";
+    // }
+    // cerr << " content="<< el->isContent() << " oref=" << el->isObjectRef() << " blk=" << el->isBlock();
+    // if (el->getActualText()) { cerr << endl << std::string(level*2, ' ') << "+ acttext=[" << el->getActualText()->c_str() << "]"; }
+    // if (el->getAltText())    { cerr << endl << std::string(level*2, ' ') << "+ altext=[" << el->getAltText()->c_str() << "]";     }
+    // cerr << endl;
+
+    if (el->getType() == StructElement::MCID) {
+        if (parent_item) {
+            if (mc_items.count(mcid) > 0) {
+                cerr << "EE DUPLICATE MCID " << mcid << endl;
+            }
+            mc_items[mcid] = parent_item;
+        }
+    } else if (!el->isContent() && el->getType() != StructElement::Document) {
+        item.add_parent(parent_item);
+        item.id = mcid;
+        item.type = el->getTypeName();
+        if (el->getAltText()) {
+            item.alt_text = el->getAltText()->toStr();
+        }
+        if (el->getActualText()) {
+            item.actual_text = el->getActualText()->c_str();
+        }
+        if (el->getType() == StructElement::Table) {
+            // table may contain summary
+            for (unsigned i = 0; i < el->getNumAttributes(); i++) {
+                auto attr =  el->getAttribute(i);
+                auto v = attr->getValue();
+                if (v && v->isString()) {
+                    if (attr->getType() == Attribute::Summary) {
+                        item.summary = v->getString()->c_str();
+                    }
+                }
+            }
+        }
+    }
+    for (unsigned i = 0; i < el->getNumChildren(); i++) {
+        go_child(el->getChild(i), item);
+    }
+    //level--;
+}
+
+
+// parse_treeroot get tags from treeroot (get page and coords on page)
+void HTMLRenderer::parse_treeroot(const StructTreeRoot * treeroot, int firstpage, int lastpage)
+{
+
+    for (unsigned i = 0; i < treeroot->getNumChildren(); i++) {
+        if (treeroot->getChild(i)->getType() == StructElement::Document) {
+            auto elem = treeroot->getChild(i);
+            HTMLTextLine::MCItem item;
+            go_child(elem, item);
+        }
+    }
+}
+
+
+// endMarkedContent
+void HTMLRenderer::endMarkedContent(GfxState *state)
+{
+
+}
+
+// beginMarkedContent
+void HTMLRenderer::beginMarkedContent(const char *name, Dict *properties)
+{
+    if (properties) {
+        for (auto i = 0; i < properties->getLength(); i++) {
+            std::string strmcid{"MCID"};
+            if (properties->getKey(i) == strmcid) {
+                auto v = properties->getVal(i);
+                //cerr << "MC " << name << " val ";  v.print(stderr); cerr << " " << v.isIntOrInt64() << endl;
+                if (v.isIntOrInt64()) {
+                    int mcid = v.getInt();
+                    if (mc_items.count(mcid) > 0) {
+                        auto line = html_text_page.get_cur_line();
+                        line->setMCItem(mc_items[mcid]);
+                        //cerr << mcid << " " << mc_items[mcid].type << endl;
+                    }
+                }
             }
         }
     }

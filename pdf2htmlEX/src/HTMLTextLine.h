@@ -25,10 +25,34 @@ namespace pdf2htmlEX {
  *  - Shift
  *  - State change
  */
+
+
 class HTMLTextLine
 {
 public:
     HTMLTextLine (const HTMLLineState & line_state, const Param & param, AllStateManager & all_manager);
+
+    // MCItem MarkedContext item
+    struct MCItem 
+    {
+        std::string type;
+        std::string alt_text;
+        std::string actual_text;
+        std::string summary;
+        int id;
+
+        std::string parent_type;
+        std::string parent_alt_text;
+        std::string parent_actual_text;
+        std::string parent_summary;
+        int parent_id;
+
+
+        operator bool() const { return !type.empty(); };
+        bool is_parent() const { return !parent_type.empty(); };
+        void add_parent(const MCItem &item);
+        void dump(std::ostream & out, bool print_parent);
+    };
 
     struct State : public HTMLTextState {
         // before output
@@ -74,6 +98,7 @@ public:
         double width;
     };
 
+
     /**
      * Append a drawn char (glyph)'s unicode. l > 1 mean this glyph correspond to
      * multiple code points.
@@ -98,6 +123,9 @@ public:
      */
     void prepare(void);
     void optimize(std::vector<HTMLTextLine*> &);
+
+    void setMCItem(const MCItem &c_mcitem);
+
 private:
     void optimize_normal(std::vector<HTMLTextLine*> &);
     void optimize_aggressive(std::vector<HTMLTextLine*> &);
@@ -135,6 +163,9 @@ private:
     std::vector<int> text;
     std::vector<std::vector<Unicode> > decomposed_text;
     std::vector<Unicode> ucs4_text;
+
+    std::vector<MCItem> mcitems;
+  
 };
 
 } // namespace pdf2htmlEX

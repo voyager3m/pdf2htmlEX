@@ -94,10 +94,9 @@ void HTMLTextPage::dump_text(ostream & out, PDFDoc *doc, int pagenum, OutlineRec
             OutlineRecVec& items = outline_recs->find(pagenum)->second;
             for (auto  i = items.begin(); i != items.end(); ++i) {
                 if ( i->left < 0.0001 && i->top < 0.0001 && i->text.size() > 0) {
-                    std::istringstream sstr(i->title);
                     out << "<div style=\"display:none;\" "
                         << "data-outline-level=\"H" << i->level << "\" "
-                        << "data-outline-title=\"" << Base64Stream(sstr) << "\" "
+                        << "data-outline-title=\"" << Base64Stream(i->title) << "\" "
                         << "data-outline-independent></div>";
                 }
             }
