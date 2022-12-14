@@ -12,6 +12,7 @@
 #include <iostream>
 #include <memory>
 #include <errno.h>
+#include <filesystem>
 
 #include <getopt.h>
 
@@ -22,6 +23,8 @@
 #include <PDFDoc.h>
 #include <PDFDocFactory.h>
 #include <GlobalParams.h>
+
+#include <Zipper.hpp>
 
 #include "pdf2htmlEX-config.h"
 
@@ -51,6 +54,7 @@ ArgParser argparser;
 void show_usage_and_exit(const char * dummy = nullptr)
 {
     cerr << "Usage: pdf2htmlEX [options] <input.pdf> [<output.html>]" << endl;
+    cerr << "   or  pdf2htmlEX [options] - < input.pdf > output.zip" << endl;
     argparser.show_usage(cerr);
     exit(EXIT_FAILURE);
 }
@@ -61,6 +65,7 @@ void show_version_and_exit(const char * dummy = nullptr)
 
     cerr << "pdf2htmlEX version " << PDF2HTMLEX_VERSION << endl;
     cerr << "Copyright 2012-2015 Lu Wang <coolwanglu@gmail.com> and other contributors" << endl;
+    cerr << "Copyright 2022 Charmtech Labs LLC <support@captivoice.com>" << endl;
     cerr << "Libraries: " << endl;
     cerr << "  poppler " << POPPLER_VERSION << endl;
     cerr << "  libfontforge (date) " << ffwVersionInfo->versionDate << endl;
@@ -208,6 +213,8 @@ void parse_options (int argc, char **argv)
         .add("debug", &param.debug, 0, "print debugging information")
         .add("proof", &param.proof, 0, "texts are drawn on both text layer and background for proof")
         .add("quiet", &param.quiet, 0, "perform operations quietly")
+        .add("memstat", &param.memstat, 1, "add memstat information to output")
+        .add("no_ref", &param.disable_ref, 1, "disable reference output to html file")
 
         // meta
         .add("version,v", "print copyright and version info", &show_version_and_exit)
@@ -245,78 +252,111 @@ void parse_options (int argc, char **argv)
 
 void check_param()
 {
-    if (param.input_filename == "")
+    param.use_console_pipeline = false;
+    if (param.input_filename == "-")
     {
-        show_usage_and_exit();
+        param.use_console_pipeline = true;
+        param.input_filename = "fd://0";
+        std::cerr << "Reading data from STDIN" << std::endl;
+        param.dest_dir = "./console_out";
+        //show_usage_and_exit();
     }
 
-    if(param.output_filename.empty())
+
+    if (param.output_filename.empty())
     {
-        const string s = get_filename(param.input_filename);
-        if(get_suffix(param.input_filename) == ".pdf")
+        if (param.use_console_pipeline)
         {
-            param.output_filename = s.substr(0, s.size() - 4) + ".html";
+            param.output_filename = "output.html";
         }
         else
         {
-            param.output_filename = s + ".html";
+            const string s = get_filename(param.input_filename);
+            if (get_suffix(param.input_filename) == ".pdf")
+            {
+                param.output_filename = s.substr(0, s.size() - 4) + ".html";
+            }
+            else
+            {
+                param.output_filename = s + ".html";
+            }
         }
     }
 
-    if(param.page_filename.empty())
+    if (param.page_filename.empty())
     {
-        const string s = get_filename(param.input_filename);
-        if(get_suffix(param.input_filename) == ".pdf")
+        if (param.use_console_pipeline)
         {
-            param.page_filename = s.substr(0, s.size() - 4) + "%d.page";
+            param.page_filename = "output.%03d.page";
         }
         else
         {
-            param.page_filename = s + "%d.page";
-        }
-        sanitize_filename(param.page_filename);
-    }
-
-    else
-    {
-        // Need to make sure we have a page number placeholder in the filename
-        if(!sanitize_filename(param.page_filename))
-        {
-            // Inject the placeholder just before the file extension
-            const string suffix = get_suffix(param.page_filename);
-            param.page_filename = param.page_filename.substr(0, param.page_filename.size() - suffix.size()) + "%d" + suffix;
+            const string s = get_filename(param.input_filename);
+            if (get_suffix(param.input_filename) == ".pdf")
+            {
+                param.page_filename = s.substr(0, s.size() - 4) + ".%03d.page";
+            }
+            else
+            {
+                param.page_filename = s + ".%d.page";
+            }
             sanitize_filename(param.page_filename);
         }
     }
-    if(param.css_filename.empty())
+    else
     {
-        const string s = get_filename(param.input_filename);
-
-        if(get_suffix(param.input_filename) == ".pdf")
+        // Need to make sure we have a page number placeholder in the filename
+        if (!sanitize_filename(param.page_filename))
         {
-            param.css_filename = s.substr(0, s.size() - 4) + ".css";
-        }
-        else
-        {
-            param.css_filename = s + ".css";
-        }
-    }
-    if(param.outline_filename.empty())
-    {
-        const string s = get_filename(param.input_filename);
-
-        if(get_suffix(param.input_filename) == ".pdf")
-        {
-            param.outline_filename = s.substr(0, s.size() - 4) + ".outline";
-        }
-        else
-        {
-            if(!param.split_pages)
-                param.outline_filename = s + ".outline";
+            // Inject the placeholder just before the file extension
+            const string suffix = get_suffix(param.page_filename);
+            param.page_filename = param.page_filename.substr(0, param.page_filename.size() - suffix.size()) + ".%03d" + suffix;
+            sanitize_filename(param.page_filename);
         }
     }
 
-    if(false) { }
+    if (param.css_filename.empty())
+    {
+        if (param.use_console_pipeline)
+        {
+            param.css_filename = "output.css";
+        }
+        else
+        {
+            const string s = get_filename(param.input_filename);
+            if (get_suffix(param.input_filename) == ".pdf")
+            {
+                param.css_filename = s.substr(0, s.size() - 4) + ".css";
+            }
+            else
+            {
+                param.css_filename = s + ".css";
+            }
+        }
+    }
+    if (param.outline_filename.empty())
+    {
+        if (param.use_console_pipeline)
+        {
+            param.outline_filename = "output.outline";
+        }
+        else
+        {
+            const string s = get_filename(param.input_filename);
+
+            if (get_suffix(param.input_filename) == ".pdf")
+            {
+                param.outline_filename = s.substr(0, s.size() - 4) + ".outline";
+            }
+            else
+            {
+                if(!param.split_pages)
+                    param.outline_filename = s + ".outline";
+            }
+        }
+    }
+
+    if (false) { }
 #ifdef ENABLE_LIBPNG
     else if (param.bg_format == "png") { }
 #endif
@@ -387,6 +427,7 @@ int main(int argc, char **argv)
     //prepare the directories
     prepare_directories();
 
+
     if(param.debug)
         cerr << "temporary dir: " << (param.tmp_dir) << endl;
 
@@ -448,9 +489,29 @@ int main(int argc, char **argv)
                    doc->getNumPages());
 
 
-        unique_ptr<HTMLRenderer>(new HTMLRenderer(argv[0], param))->process(doc.get());
+        unique_ptr<HTMLRenderer> renderer(new HTMLRenderer(argv[0], param));
+        renderer->process(doc.get());
+        renderer->dump();
 
         finished = true;
+
+        if (param.use_console_pipeline) {
+          std::string path = param.dest_dir;
+          std::vector<unsigned char> zip_buffer;
+
+          zipper::Zipper zip(zip_buffer);
+
+          for (const auto & entry : filesystem::directory_iterator(path)) {
+            std::ifstream source(entry.path());
+            if (source) {
+              zip.add(source, entry.path().filename());
+            }
+          }
+          zip.close();
+          cout.write((const char *)(zip_buffer.data()), zip_buffer.size());
+          filesystem::remove_all(path);
+        }
+
     }
     catch (const char * s)
     {

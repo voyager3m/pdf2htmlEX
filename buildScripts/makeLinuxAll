@@ -17,8 +17,10 @@ export DEBIAN_FRONTEND=noninteractive
 ./buildScripts/getBuildToolsApt
 ./buildScripts/getDevLibrariesApt
 ./buildScripts/getPoppler
+./buildScripts/getZipper
 ./buildScripts/buildPoppler
 ./buildScripts/getFontforge
 ./buildScripts/buildFontforge
+./buildScripts/buildZipper
 ./buildScripts/buildPdf2htmlEX
 ./buildScripts/createDebianPackage

@@ -16,6 +16,8 @@ public:
     void add( const std::string& fn);
     double get_total_size() const;
 
+    void dump();
+
 private:
     void clean();
 

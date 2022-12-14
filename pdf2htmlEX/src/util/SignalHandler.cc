@@ -25,11 +25,16 @@ messages when FontForge can't save a file for us.
 #include <string>
 #include <unistd.h>
 #include <signal.h>
+#include <execinfo.h>
+#include <stdlib.h>
 
 #include "pdf2htmlEX-config.h"
 #include "util/ffw.h"
 #include <cairo/cairo.h>
 #include <poppler/poppler-config.h>
+
+#define BT_BUF_SIZE 200
+
 
 const char* oopsMessage  =
   "\n"
@@ -91,6 +96,8 @@ const char* detailsHeader =
   "\n";
 
 const char* detailsBody = "no details recorded\n";
+const char* detailsCatch = "Catch signal: ";
+
 
 const char* pdf2htmlEXTmpDir = NULL;
 const char* ffwAction        = NULL;
@@ -101,6 +108,25 @@ struct sigaction act;
 #pragma GCC diagnostic ignored "-Wunused-result" 
 void signalHandler(int sigInt) {
   write(STDERR_FILENO, oopsMessage,        strlen(oopsMessage) );
+
+  void *buffer[BT_BUF_SIZE];
+  int nptrs = backtrace(buffer, BT_BUF_SIZE);
+  fprintf(stderr, "backtrace() returned %d addresses\n", nptrs);
+  char **strings = backtrace_symbols(buffer, nptrs);
+  if (strings == NULL) {
+    perror("backtrace_symbols");
+  } else {
+    for (int j = 0; j < nptrs; j++) {
+      printf("%s\n", strings[j]);
+    }
+    free(strings);
+  }
+
+  write(STDERR_FILENO, detailsHeader,      strlen(detailsHeader) );
+  write(STDERR_FILENO, detailsCatch,       strlen(detailsCatch) );
+  char *msg  = strsignal(sigInt);
+  write(STDERR_FILENO, msg, strlen(msg));
+  write(STDERR_FILENO, detailsHeader,      strlen(detailsHeader) );
 
   if (ffwAction) {
     write(STDERR_FILENO, ffwMessage_1,     strlen(ffwMessage_1) );
@@ -154,6 +180,7 @@ void setupSignalHandler(
   detailInfo = detailInfo + "Version information:\n";
   detailInfo = detailInfo + "  pdf2htmlEX version " + pdf2htmlEX::PDF2HTMLEX_VERSION + "\n";
   detailInfo = detailInfo + "  Copyright 2012-2015 Lu Wang <coolwanglu@gmail.com> and other contributors\n";
+  detailInfo = detailInfo + "  Copyright 2022 Charmtech Labs LLC <support@captivoice.com>\n";
   detailInfo = detailInfo + "\n";
   detailInfo = detailInfo + "Libraries:\n" ;
   detailInfo = detailInfo + "  poppler " + POPPLER_VERSION + "\n";

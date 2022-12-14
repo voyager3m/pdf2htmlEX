@@ -151,32 +151,33 @@ void HTMLTextLine::dump_chars(ostream & out, int begin, int len)
 void HTMLTextLine::dump_outline(std::ostream &out, OutlineRecMap *outline, int pagenum)
 {
     if (outline && outline->find(pagenum) != outline->end()) {
-        
         OutlineRecVec& items = outline->find(pagenum)->second;
         double z = param.zoom > 0.01 ? param.zoom : 1.;
-        //double fz = states[0].font_size * (72.0/param.text_dpi) * z;
-        double line_left = line_state.x - clip_x1;
+        // double fz = states[0].font_size * (72.0/param.text_dpi) * z;
+        // double line_left = line_state.x - clip_x1;
         double line_top = line_state.y - clip_y1 ; //+ fz - clip_y1;
 
-        for (auto  i = items.begin(); i != items.end(); ++i) {
+        // out << " data-dbg=\"" << line_left  << " " << line_top   << " " << ascent << " " << descent << " " << line_left / z << " " << line_top / z << "\"";
+
+        // !!! use only vertical align
+        // !!! horizontal coords are wrong
+        //for (auto  i = items.begin(); i != items.end(); ++i) {
+        for (size_t j = 0; j < items.size(); j++) {
             // ?? if (abs(line_left - out_left) < 5. && abs(line_top - out_top) < 5.) {
-             if ( i->left < 0.0001 && i->top < 0.0001 && i->text.size() > 0) {
-                if (std::equal(i->text.begin(), i->text.end(), ucs4_text.begin())) {
-                    //printf("EQ %1d %d %s \n", i->level, pagenum, i->title.c_str());
-                    //outline->at(pagenum).at.size();
-                    i->text.clear();
-                    out << " data-outline-level=\"H" << i->level << "\" data-outline-title=\"" << Base64Stream(i->title) << "\"";
+            auto i = items[j];
+            if ( i.left < 0.0001 && i.top < 0.0001 && i.text.size() > 0) {
+                if (std::equal(i.text.begin(), i.text.end(), ucs4_text.begin())) {
+                    i.text.clear();
+                    out << " data-outline-level=\"H" << i.level << "\" data-outline-title=\"" << Base64Stream(i.title) << "\"";
                 }
             } else {
-                double out_left = i->left * z;
-                double out_top = i->top * z;
-                if (abs(line_left - out_left) < 5. &&  out_top > line_top && out_top < (line_top + ascent)) {
-                    //printf("OK deep=%d %s\n", i->level, i->title.c_str());
-                    out << " data-outline-level=\"H" << i->level << "\" data-outline-title=\"" << Base64Stream(i->title) << "\"";
-                    //printf("apply outline: %f,%f,%d,%d, %s\n", out_left,out_top,i.level,pagenum,i.title.c_str());
+                //double out_left = i->left * z;
+                double out_top = i.top * z;
+                if (/*abs(line_left - out_left) < 5. && */ out_top >= (line_top - 5.) && out_top <= (line_top + ascent) && !i.used) {
+                    out << " data-outline-level=\"H" << i.level << "\" data-outline-title=\"" << Base64Stream(i.title) << "\"";
+                    items[j].used = true;
                 }
             } 
-            //printf("dest[l%f t%f] line[l%f t%f] f%f\n", out_left, out_top, line_left, line_top, fz);
         }
     }
 }

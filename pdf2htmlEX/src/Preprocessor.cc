@@ -42,6 +42,7 @@ Preprocessor::~Preprocessor(void)
 
 void Preprocessor::process(PDFDoc * doc)
 {
+    if (doc == nullptr) return;
     int page_count = (param.last_page - param.first_page + 1);
     for(int i = param.first_page; i <= param.last_page ; ++i) 
     {
@@ -67,6 +68,7 @@ void Preprocessor::drawChar(GfxState *state, double x, double y,
       double originX, double originY,
       CharCode code, int nBytes, const Unicode *u, int uLen)
 {
+    if (state == nullptr) return;
     auto font = state->getFont();
     if(!font) return;
 

@@ -10,7 +10,7 @@
 #include <algorithm>
 
 #include "HTMLRenderer.h"
-
+#include <assert.h>
 #include "util/namespace.h"
 #include "util/unicode.h"
 
@@ -25,6 +25,7 @@ using std::endl;
 
 void HTMLRenderer::drawString(GfxState * state, const GooString * s)
 {
+    assert(state != nullptr);
     if(s->getLength() == 0)
         return;
 
@@ -58,8 +59,10 @@ void HTMLRenderer::drawString(GfxState * state, const GooString * s)
 
     // Now ready to output
     // get the unicodes
+    assert(s != nullptr);
     const char *p = (s->toStr()).c_str();
     int len = s->getLength();
+    assert(p != nullptr);
 
     //accumulated displacement of chars in this string, in text object space
     double dx = 0;

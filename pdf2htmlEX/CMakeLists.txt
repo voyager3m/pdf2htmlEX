@@ -83,6 +83,23 @@ set(FONTFORGE_LIBRARIES ${FONTFORGE_LIBRARIES}
   ${CMAKE_SOURCE_DIR}/../fontforge/build/lib/libfontforge.a
 )
 
+
+### Zipper
+include_directories(
+  ../zipper/include
+  ../zipper/include/Zipper
+  ../zipper/build
+)
+#
+set(ZIPPER_LIBRARIES ${ZIPPER_LIBRARIES}
+  ${CMAKE_SOURCE_DIR}/../zipper/build/libzipper.a.2.0.0
+)
+
+#include_directories(${ZIPPER_INCLUDE_DIRS})
+#link_directories(${ZIPPER_LIBRARY_DIRS})
+
+
+
 # If we are using Alpine Linux then we need to add -lintl
 #
 if (EXISTS /usr/lib/libintl.so ) 
@@ -94,6 +111,7 @@ endif()
 set(PDF2HTMLEX_LIBS ${PDF2HTMLEX_LIBS}
   ${POPPLER_LIBRARIES}
   ${FONTFORGE_LIBRARIES}
+  ${ZIPPER_LIBRARIES}
   ${LIB_INTL_LIBRARIES}
   ${CAIRO_LIBRARIES}
   -ljpeg

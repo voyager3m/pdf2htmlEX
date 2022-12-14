@@ -73,5 +73,13 @@ void TmpFiles::clean()
         cerr << "Remove temporary directory: " << param.tmp_dir << endl;
 }
 
+
+void TmpFiles::dump() {
+    cerr << "DUMP Tmp file" << endl;
+    for (auto &i: tmp_files) {
+        cerr << "  TMP file " << i << endl;
+    }
+}
+
 } // namespace pdf2htmlEX
 

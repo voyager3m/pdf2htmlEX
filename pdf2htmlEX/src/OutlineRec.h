@@ -18,9 +18,11 @@ namespace pdf2htmlEX {
 struct OutlineRec {
     double              left;
     double              top;
+    double              bottom;
     std::string         title; // UTF-8 base64 encoded string
     int                 level;
     std::vector<int>    text;
+    bool                used;
 
     void add_text(const Unicode *u, int len);
 };

@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <vector>
 #include <functional>
+#include <sys/resource.h>
 
 #include <GlobalParams.h>
 
@@ -28,6 +29,7 @@
 #include "util/path.h"
 #include "util/css_const.h"
 #include "util/encoding.h"
+#include "util/misc.h"
 
 namespace pdf2htmlEX {
 
@@ -148,8 +150,16 @@ void HTMLRenderer::process(PDFDoc *doc)
             break;
         }
 
-        if (param.quiet == 0)
-            cerr << "Working: " << (i-param.first_page) << "/" << page_count << '\r' << flush;
+        if (param.quiet == 0) {
+          cerr << "Working: " << (i-param.first_page) << "/" << page_count;
+          if(param.memstat != 0) {
+            struct rusage r;
+            if (getrusage(RUSAGE_SELF, &r) == 0) { // OK
+              cerr <<  prints (" cpu:%3ld.%03lds mem: %7ld KB", r.ru_utime.tv_sec, r.ru_utime.tv_usec/1000, r.ru_maxrss);
+            }
+          }
+          cerr << endl;
+        }
 
         if(param.split_pages)
         {
@@ -182,8 +192,15 @@ void HTMLRenderer::process(PDFDoc *doc)
             f_curpage = nullptr;
         }
     }
-    if(page_count >= 0 && param.quiet == 0)
-        cerr << "Working: " << page_count << "/" << page_count;
+    if(page_count >= 0 && param.quiet == 0) {
+      cerr << "Working: " << page_count << "/" << page_count;
+      if(param.memstat != 0) {
+        struct rusage r;
+        if (getrusage(RUSAGE_SELF, &r) == 0) { // OK
+          cerr <<  prints (" cpu:%3ld.%03lds mem: %7ld KB", r.ru_utime.tv_sec, r.ru_utime.tv_usec/1000, r.ru_maxrss);
+        }
+      }
+    }
 
     if(param.quiet == 0)
         cerr << endl;
@@ -277,7 +294,9 @@ void HTMLRenderer::endPage() {
         process_form(*f_curpage);
     
     // process links before the page is closed
-    cur_doc->processLinks(this, pageNum);
+    if (param.disable_ref == 0) {
+      cur_doc->processLinks(this, pageNum);
+    }
 
     // close box
     (*f_curpage) << "</div>";
@@ -680,13 +699,15 @@ void HTMLRenderer::dump_outline(std::map<int, std::vector<OutlineRec>> *outline,
                         OutlineRec rec {0.000001, 0.000001};
                         rec.title = UnicodeToUTF8(i->getTitle(), i->getTitleLength());
                         rec.level = deep;
+                        rec.used = false;
                         if (dest->getKind() == destXYZ) {
                             rec.left    = dest->getLeft();
                             rec.top     = dest->getTop();
+                            rec.bottom  = dest->getBottom();
                         }
                         rec.add_text(i->getTitle(), i->getTitleLength());
                         (*outline)[pagenum].push_back(rec);
-                        //printf("get outline record: x=%f y=%f l=%d pagenum=%d title=%s\n", rec.left, rec.top, deep, pagenum, rec.title.c_str());
+                        //printf("get outline record: x=%f top=%f bottom=%f l=%d pagenum=%d title=%s\n", rec.left, rec.top, rec.bottom, deep, pagenum, rec.title.c_str());
                     }
                     dest.reset();
                 }
@@ -727,7 +748,7 @@ void HTMLRenderer::go_child (const StructElement *el, HTMLTextLine::MCItem paren
     if (el->getType() == StructElement::MCID) {
         if (parent_item) {
             if (mc_items.count(mcid) > 0) {
-                cerr << "EE DUPLICATE MCID " << mcid << endl;
+                //cerr << "EE DUPLICATE MCID " << mcid << endl;
             }
             mc_items[mcid] = parent_item;
         }
@@ -794,7 +815,11 @@ void HTMLRenderer::beginMarkedContent(const char *name, Dict *properties)
                     int mcid = v.getInt();
                     if (mc_items.count(mcid) > 0) {
                         auto line = html_text_page.get_cur_line();
-                        line->setMCItem(mc_items[mcid]);
+                        if (line) {
+                          line->setMCItem(mc_items[mcid]);
+                        } else {
+                          std::cerr << "Line is NULL\n\n";
+                        }
                         //cerr << mcid << " " << mc_items[mcid].type << endl;
                     }
                 }

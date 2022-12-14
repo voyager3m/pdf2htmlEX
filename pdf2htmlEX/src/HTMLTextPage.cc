@@ -33,6 +33,7 @@ HTMLTextPage::~HTMLTextPage()
 
 void HTMLTextPage::dump_text(ostream & out, PDFDoc *doc, int pagenum, OutlineRecMap *outline_recs)
 {
+    if (doc == NULL) return;
     if(param.optimize_text)
     {
         // text lines may be split during optimization, collect them

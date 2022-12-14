@@ -14,10 +14,8 @@ RUN   apt update && \
   apt -y upgrade && \
   apt -y --no-install-recommends install /root/*.deb
 
+COPY ./configuration/manifest /usr/local/share/pdf2htmlEX/manifest
 WORKDIR /pdf
-
-
-
 LABEL vendor="capti"
 
 ENTRYPOINT [ "/usr/local/bin/pdf2htmlEX" ]

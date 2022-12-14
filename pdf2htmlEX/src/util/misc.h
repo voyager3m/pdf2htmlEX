@@ -34,6 +34,10 @@ void css_fix_rectangle_border_width(double x1, double y1, double x2, double y2,
 
 std::ostream & operator << (std::ostream & out, const GfxRGB & rgb);
 
+
+std::string prints(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
+
+
 } // namespace pdf2htmlEX
 
 #endif //UTIL_H__

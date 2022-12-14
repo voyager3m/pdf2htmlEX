@@ -1,0 +1,26 @@
+#!/bin/sh
+
+# This shell script gets and unpacks the latest Zipper files
+
+# source buildScripts/reSourceVersionEnvs
+. buildScripts/reSourceVersionEnvs
+
+echo ""
+echo "-------------------------------------------------------------------"
+echo "GETTING Zipper source code"
+echo "-------------------------------------------------------------------"
+echo ""
+
+
+#rm -rf master.zip
+rm -rf zipper
+
+set -ev
+
+#wget https://github.com/Lecrapouille/zipper/archive/refs/heads/master.zip
+
+#unzip master.zip
+
+#mv zipper-master zipper
+
+git clone https://github.com/lecrapouille/zipper.git --recursive zipper

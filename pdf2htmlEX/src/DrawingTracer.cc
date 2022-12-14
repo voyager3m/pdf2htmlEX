@@ -86,6 +86,7 @@ void DrawingTracer::update_ctm(GfxState *state, double m11, double m12, double m
 
 void DrawingTracer::clip(GfxState * state, bool even_odd)
 {
+    if (state == nullptr) return;
     if (!param.correct_text_visibility)
         return;
     do_path(state, state->getPath());
@@ -138,6 +139,7 @@ void DrawingTracer::restore()
 
 void DrawingTracer::do_path(GfxState * state, const GfxPath * path)
 {
+    if (state == nullptr) return;
     //copy from CairoOutputDev::doPath
     const GfxSubpath *subpath;
     int i, j;

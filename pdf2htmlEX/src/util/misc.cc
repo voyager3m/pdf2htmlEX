@@ -63,4 +63,20 @@ ostream & operator << (ostream & out, const GfxRGB & rgb)
     return out;
 }
 
+
+// prints
+std::string prints(const char *format, ...)
+{
+  va_list list;
+  char *str = 0;
+  va_start(list, format);
+  if (::vasprintf(&str, format, list) < 0) {
+    return "prints error";
+  }
+  va_end(list);
+  std::string result(str);
+  ::free(str);
+  return result;
+}
+
 } // namespace pdf2htmlEX

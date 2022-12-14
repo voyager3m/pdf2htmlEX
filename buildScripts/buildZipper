@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# This shell script builds the latest poppler
+
+echo ""
+echo "-------------------------------------------------------------------"
+echo "BUILDING Zipper (using make)"
+echo "-------------------------------------------------------------------"
+echo ""
+
+set -ev
+
+cd zipper
+make download-external-libs
+make compile-external-libs
+make -j`nproc --all`
+# make -j`sysctl -n hw.logicalcpu` for MacOS X
+
+
