@@ -253,13 +253,17 @@ void parse_options (int argc, char **argv)
 void check_param()
 {
     param.use_console_pipeline = false;
-    if (param.input_filename == "-")
+
+    if (param.input_filename.empty())
+    {
+        show_usage_and_exit();
+    }
+    else if (param.input_filename == "-")
     {
         param.use_console_pipeline = true;
         param.input_filename = "fd://0";
         std::cerr << "Reading data from STDIN" << std::endl;
         param.dest_dir = "./console_out";
-        //show_usage_and_exit();
     }
 
 
@@ -287,18 +291,18 @@ void check_param()
     {
         if (param.use_console_pipeline)
         {
-            param.page_filename = "output.%03d.page";
+            param.page_filename = "output%03d.page";
         }
         else
         {
             const string s = get_filename(param.input_filename);
             if (get_suffix(param.input_filename) == ".pdf")
             {
-                param.page_filename = s.substr(0, s.size() - 4) + ".%03d.page";
+                param.page_filename = s.substr(0, s.size() - 4) + "%03d.page";
             }
             else
             {
-                param.page_filename = s + ".%d.page";
+                param.page_filename = s + "%d.page";
             }
             sanitize_filename(param.page_filename);
         }
@@ -310,7 +314,7 @@ void check_param()
         {
             // Inject the placeholder just before the file extension
             const string suffix = get_suffix(param.page_filename);
-            param.page_filename = param.page_filename.substr(0, param.page_filename.size() - suffix.size()) + ".%03d" + suffix;
+            param.page_filename = param.page_filename.substr(0, param.page_filename.size() - suffix.size()) + "%03d" + suffix;
             sanitize_filename(param.page_filename);
         }
     }
@@ -427,6 +431,8 @@ int main(int argc, char **argv)
     //prepare the directories
     prepare_directories();
 
+
+    param.dump(cerr);
 
     if(param.debug)
         cerr << "temporary dir: " << (param.tmp_dir) << endl;

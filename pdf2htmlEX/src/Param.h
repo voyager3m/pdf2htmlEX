@@ -10,6 +10,7 @@
 #define PARAM_H__
 
 #include <string>
+#include <sstream>
 
 namespace pdf2htmlEX {
 
@@ -86,10 +87,12 @@ struct Param
     int quiet;
     int memstat; // add cpu and mem stat to console output
     int disable_ref; // disable reference table in output file
-    
+
     bool use_console_pipeline; // use console pipeline for input/output file
 
     std::string input_filename, output_filename;
+
+    void dump(std::ostream &s) const;
 };
 
 } // namespace pdf2htmlEX

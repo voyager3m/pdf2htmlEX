@@ -182,6 +182,7 @@ configure_file (${CMAKE_SOURCE_DIR}/share/pdf2htmlEX.js.in ${CMAKE_SOURCE_DIR}/s
 
 set(PDF2HTMLEX_SRC ${PDF2HTMLEX_SRC}
     src/Param.h
+    src/Param.cc
     src/pdf2htmlEX.cc
     src/pdf2htmlEX-config.h
     src/HTMLRenderer/HTMLRenderer.h
