@@ -398,6 +398,14 @@ void check_param()
 
 int main(int argc, char **argv)
 {
+  // print args
+  cerr << "ARGS: ";
+  for (int i = 0; i < argc; i++) {
+    cerr << argv[i] << " ";
+  }
+  cerr << endl;
+
+
     // We need to adjust these directories before parsing the options.
 #if defined(__MINGW32__)
     param.data_dir = get_exec_dir(argv[0]);
@@ -502,6 +510,7 @@ int main(int argc, char **argv)
         finished = true;
 
         if (param.use_console_pipeline) {
+          cerr << "ZIP all files ... ";
           std::string path = param.dest_dir;
           std::vector<unsigned char> zip_buffer;
 
@@ -515,6 +524,7 @@ int main(int argc, char **argv)
           }
           zip.close();
           cout.write((const char *)(zip_buffer.data()), zip_buffer.size());
+          cerr << zip_buffer.size() << " bytes" << endl;
           filesystem::remove_all(path);
         }
 
@@ -535,6 +545,12 @@ int main(int argc, char **argv)
     // Poppler Object class (Object.h) no longer has memCheck
     //Object::memCheck(stderr);
     //gMemReport(stderr);
+
+    if (finished) {
+      cerr << "\nexit success\n";
+    } else {
+      cerr << "\nexit failure\n";
+    }
 
     exit(finished ? (EXIT_SUCCESS) : (EXIT_FAILURE));
 
