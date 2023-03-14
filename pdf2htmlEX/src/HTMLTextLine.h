@@ -7,6 +7,7 @@
 
 #include <ostream>
 #include <vector>
+#include <set>
 
 #include <CharTypes.h>
 #include "Param.h"
@@ -15,6 +16,8 @@
 #include <PDFDoc.h>
 #include <Outline.h>
 #include "OutlineRec.h"
+#include "MCItem.h"
+
 namespace pdf2htmlEX {
 
 /*
@@ -32,28 +35,7 @@ class HTMLTextLine
 public:
     HTMLTextLine (const HTMLLineState & line_state, const Param & param, AllStateManager & all_manager);
 
-    // MCItem MarkedContext item
-    struct MCItem 
-    {
-        std::string type;
-        std::string alt_text;
-        std::string actual_text;
-        std::string summary;
-        int id;
-
-        std::string parent_type;
-        std::string parent_alt_text;
-        std::string parent_actual_text;
-        std::string parent_summary;
-        int parent_id;
-
-
-        operator bool() const { return !type.empty(); };
-        bool is_parent() const { return !parent_type.empty(); };
-        void add_parent(const MCItem &item);
-        void dump(std::ostream & out, bool print_parent);
-    };
-
+    
     struct State : public HTMLTextState {
         // before output
         void begin(std::ostream & out, const State * prev_state);
@@ -124,7 +106,7 @@ public:
     void prepare(void);
     void optimize(std::vector<HTMLTextLine*> &);
 
-    void setMCItem(const MCItem &c_mcitem);
+    void setMCItem(const int itemId);
 
 private:
     void optimize_normal(std::vector<HTMLTextLine*> &);
@@ -164,7 +146,7 @@ private:
     std::vector<std::vector<Unicode> > decomposed_text;
     std::vector<Unicode> ucs4_text;
 
-    std::vector<MCItem> mcitems;
+    std::set<int> mcitems;
   
 };
 

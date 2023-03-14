@@ -205,8 +205,13 @@ void HTMLTextLine::dump_text(ostream & out, PDFDoc *doc, int pagenum, OutlineRec
         dump_outline(out, outline_recs, pagenum);
 
         // dump tags
-        for (auto &i: mcitems) {
-            i.dump(out, true);
+        if (mcitems.size() > 0) {
+            out << " data-tags=\"[";
+            for (auto const &i: mcitems) {
+                if (*mcitems.begin() != i) out << ",";
+                out << i;
+            }
+            out << "]\" ";
         }
 
         out << " class=\"" << CSS::LINE_CN
@@ -791,49 +796,11 @@ const char * const HTMLTextLine::State::css_class_names [] = {
 
 
 // setMCItem
-void HTMLTextLine::setMCItem(const MCItem &c_mcitem)
+void HTMLTextLine::setMCItem(const int itemId)
 {
-    mcitems.push_back(c_mcitem);
+    mcitems.emplace(itemId);
 }
 
-
-// add_parent
-void HTMLTextLine::MCItem::add_parent(const MCItem &item) 
-{
-    parent_type         = item.type;
-    parent_alt_text     = item.alt_text;
-    parent_summary      = item.summary;
-    parent_actual_text  = item.actual_text;   
-    parent_id           = item.id;
-}
-
-// dump
-void HTMLTextLine::MCItem::dump(ostream & out, bool print_parent)
-{
-    out << " data-tag-type=\"" << type << "\" ";
-    if (!alt_text.empty()) {
-        out << "data-tag-alttext=\"" << Base64Stream(alt_text) << "\" ";
-    }
-    if (!actual_text.empty()) {
-        out << "data-tag-actualtext=\"" << Base64Stream(actual_text) << "\" ";
-    }
-    if (!summary.empty()) {
-        out << "data-tag-summary=\"" << Base64Stream(summary) << "\" ";
-    }
-    if (print_parent && is_parent()) {
-        out << "data-tag-parent-type=\"" << parent_type << "\" ";
-        out << "data-tag-parent-id=\"" << parent_id << "\" ";
-        if (!parent_alt_text.empty()) {
-            out << "data-tag-partent-alttext=\"" << Base64Stream(parent_alt_text) << "\" ";
-        }
-        if (!parent_actual_text.empty()) {
-            out << "data-tag-parent-actualtext=\"" << Base64Stream(parent_actual_text) << "\" ";
-        }
-        if (!parent_summary.empty()) {
-            out << "data-tag-parent-summary=\"" << Base64Stream(parent_summary) << "\" ";
-        }
-    }
-}
 
 
 } //namespace pdf2htmlEX

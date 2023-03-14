@@ -25,4 +25,5 @@ sudo apk add        \
   glib-dev          \
   fontconfig-dev    \
   libjpeg-turbo-dev \
+  jsoncpp-dev       \
   libxml2-dev

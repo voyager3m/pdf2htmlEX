@@ -90,6 +90,7 @@ void Param::dump(std::ostream &s) const
     S(s, quiet);
     S(s, memstat); // add cpu and mem stat to console output
     S(s, disable_ref); // disable reference table in output file
+    S(s, tags); // process tags
 
     s << endl << "use console pipeline for input/output file" << endl;
     S(s, use_console_pipeline); // 

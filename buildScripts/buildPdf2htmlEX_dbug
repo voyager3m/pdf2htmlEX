@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # This shell script builds pdf2htmlEX
 
@@ -10,14 +10,19 @@ echo "-------------------------------------------------------------------"
 echo "BUILDING pdf2htmlEX (using gcc)"
 echo "  PDF2HTMLEX_VERSION = [$PDF2HTMLEX_VERSION]"
 echo "-------------------------------------------------------------------"
-
+echo "$1"
 echo ""
 
 set -ev
 
 cd pdf2htmlEX
-rm -rf build
-mkdir build
+
+
+if [ "$1" = "clean" ] ; then
+  rm -rf build
+  mkdir build
+fi
+
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PDF2HTMLEX_PREFIX ..
+cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$PDF2HTMLEX_PREFIX ..
 make $MAKE_PARALLEL

@@ -69,6 +69,7 @@ apk add --no-cache \
   cairo            \
   libpng           \
   libjpeg-turbo    \
+  jsoncpp          \
   libxml2
 
 # Now we install the (Alpine $DIST) compiled pdf2htmlEX binaries and 

@@ -8,12 +8,13 @@
 
 #include <cstdio>
 #include <ostream>
+#include <fstream>
 #include <cmath>
 #include <algorithm>
 #include <vector>
 #include <functional>
 #include <sys/resource.h>
-
+#include <string> 
 #include <GlobalParams.h>
 
 #include "pdf2htmlEX-config.h"
@@ -161,8 +162,7 @@ void HTMLRenderer::process(PDFDoc *doc)
           cerr << endl;
         }
 
-        if(param.split_pages)
-        {
+        if (param.split_pages) {
             // copy the string out, since we will reuse the buffer soon
             string filled_template_filename = (char*)str_fmt(param.page_filename.c_str(), i);
             auto page_fn = str_fmt("%s/%s", param.dest_dir.c_str(), filled_template_filename.c_str());
@@ -725,11 +725,11 @@ void HTMLRenderer::dump_outline(std::map<int, std::vector<OutlineRec>> *outline,
 
 
 
-// go_child    
-void HTMLRenderer::go_child (const StructElement *el, HTMLTextLine::MCItem parent_item)
+// go_child parse MC items (tags) and save it to array
+MCItem go_child (const StructElement *el)
 {
     int mcid = el->getMCID();
-    HTMLTextLine::MCItem item;
+    MCItem item;
     // static int level = 0;
     // level++;    
     // cerr << std::string(level * 2, ' ') << "mcid=" << el->getMCID()  << " type=" << el->getTypeName() << " numchild=" << el->getNumChildren() << " " ;
@@ -745,15 +745,8 @@ void HTMLRenderer::go_child (const StructElement *el, HTMLTextLine::MCItem paren
     // if (el->getAltText())    { cerr << endl << std::string(level*2, ' ') << "+ altext=[" << el->getAltText()->c_str() << "]";     }
     // cerr << endl;
 
+
     if (el->getType() == StructElement::MCID) {
-        if (parent_item) {
-            if (mc_items.count(mcid) > 0) {
-                //cerr << "EE DUPLICATE MCID " << mcid << endl;
-            }
-            mc_items[mcid] = parent_item;
-        }
-    } else if (!el->isContent() && el->getType() != StructElement::Document) {
-        item.add_parent(parent_item);
         item.id = mcid;
         item.type = el->getTypeName();
         if (el->getAltText()) {
@@ -762,35 +755,57 @@ void HTMLRenderer::go_child (const StructElement *el, HTMLTextLine::MCItem paren
         if (el->getActualText()) {
             item.actual_text = el->getActualText()->c_str();
         }
-        if (el->getType() == StructElement::Table) {
-            // table may contain summary
-            for (unsigned i = 0; i < el->getNumAttributes(); i++) {
-                auto attr =  el->getAttribute(i);
-                auto v = attr->getValue();
-                if (v && v->isString()) {
-                    if (attr->getType() == Attribute::Summary) {
-                        item.summary = v->getString()->c_str();
-                    }
+        if (el->getTitle()) {
+            item.title = el->getTitle()->c_str();
+        }
+
+
+
+        for (unsigned i = 0; i < el->getNumAttributes(); i++) {
+            auto attr =  el->getAttribute(i);
+            auto v = attr->getValue();
+            if (v && v->isString()) {
+                if (attr->getType() == Attribute::Summary) {
+                    item.summary += v->getString()->c_str();
+                }
+            }
+        }
+
+    } else if (!el->isContent() && el->getType() != StructElement::Document) {
+        item.id = mcid;
+        item.type = el->getTypeName();
+        if (el->getAltText()) {
+            item.alt_text = el->getAltText()->toStr();
+        }
+        if (el->getActualText()) {
+            item.actual_text = el->getActualText()->c_str();
+        }
+        // table may contain summary
+        for (unsigned i = 0; i < el->getNumAttributes(); i++) {
+            auto attr =  el->getAttribute(i);
+            auto v = attr->getValue();
+            if (v && v->isString()) {
+                if (attr->getType() == Attribute::Summary) {
+                    item.summary += v->getString()->c_str();
                 }
             }
         }
     }
     for (unsigned i = 0; i < el->getNumChildren(); i++) {
-        go_child(el->getChild(i), item);
+        item.children.push_back(go_child(el->getChild(i)));
     }
-    //level--;
+    return item;
 }
 
 
-// parse_treeroot get tags from treeroot (get page and coords on page)
+// parse_treeroot parse tags (get tags) from treeroot (get page num and coords on page)
 void HTMLRenderer::parse_treeroot(const StructTreeRoot * treeroot, int firstpage, int lastpage)
 {
-
+    // тут розбираються  всі теги з словника документа і зберігаються в масиві
     for (unsigned i = 0; i < treeroot->getNumChildren(); i++) {
         if (treeroot->getChild(i)->getType() == StructElement::Document) {
             auto elem = treeroot->getChild(i);
-            HTMLTextLine::MCItem item;
-            go_child(elem, item);
+            mc_items.push_back(go_child(elem));
         }
     }
 }
@@ -805,6 +820,7 @@ void HTMLRenderer::endMarkedContent(GfxState *state)
 // beginMarkedContent
 void HTMLRenderer::beginMarkedContent(const char *name, Dict *properties)
 {
+   // для кожної лінії по масиву тегів шукається які теги підходять по координатам
     if (properties) {
         for (auto i = 0; i < properties->getLength(); i++) {
             std::string strmcid{"MCID"};
@@ -813,20 +829,43 @@ void HTMLRenderer::beginMarkedContent(const char *name, Dict *properties)
                 //cerr << "MC " << name << " val ";  v.print(stderr); cerr << " " << v.isIntOrInt64() << endl;
                 if (v.isIntOrInt64()) {
                     int mcid = v.getInt();
-                    if (mc_items.count(mcid) > 0) {
+                    
+/*                    if (mc_items.count(mcid) > 0) {
                         auto line = html_text_page.get_cur_line();
                         if (line) {
-                          line->setMCItem(mc_items[mcid]);
+                          line->setMCItem(mcid);
                         } else {
                           std::cerr << "Line is NULL\n\n";
                         }
                         //cerr << mcid << " " << mc_items[mcid].type << endl;
-                    }
+                    }*/
+
+                        auto line = html_text_page.get_cur_line();
+                        if (line)  line->setMCItem(mcid);
                 }
             }
         }
     }
 }
+
+
+// dump_tags 
+void HTMLRenderer::dump_tags(const std::string &filename)
+{
+  auto of = std::ofstream(filename.c_str());
+  if (of.good()) {
+     Json::Value result(Json::arrayValue);
+     for (auto &i : mc_items) {
+        result.append(i.getJson());
+     }
+     of << result.toStyledString();
+  } else {
+    std::cerr << "ERR: failed to open tags.json file: " <<  strerror(errno);
+  }
+
+}
+
+
 
 
 }// namespace pdf2htmlEX

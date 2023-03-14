@@ -87,6 +87,7 @@ struct Param
     int quiet;
     int memstat; // add cpu and mem stat to console output
     int disable_ref; // disable reference table in output file
+    int tags; // process tags
 
     bool use_console_pipeline; // use console pipeline for input/output file
 

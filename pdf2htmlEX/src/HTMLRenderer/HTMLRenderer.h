@@ -200,6 +200,9 @@ struct HTMLRenderer : OutputDev
     virtual void endMarkedContent(GfxState *state);
     virtual void beginMarkedContent(const char *name, Dict *properties);
 
+
+    void dump_tags(const std::string &filename);
+
 protected:
     ////////////////////////////////////////////////////
     // misc
@@ -219,7 +222,7 @@ protected:
     static std::string UnicodeToUTF8(const Unicode *str, int len);
     void dump_outline(OutlineRecMap *outline, const std::vector<OutlineItem *> *items, int firstpage, int lastpage, int deep = 0);
     void parse_treeroot(const StructTreeRoot * treeroot, int firstpage, int lastpage);
-    void go_child (const StructElement *el, HTMLTextLine::MCItem parent_item);
+    //void go_child (const StructElement *el, MCItem parent_item);
 
     // convert a LinkAction to a string that our Javascript code can understand
     std::string get_linkaction_str(const LinkAction *, std::string & detail);
@@ -395,7 +398,7 @@ protected:
     CoveredTextDetector covered_text_detector;
     DrawingTracer tracer;
     
-    std::map<int, HTMLTextLine::MCItem> mc_items;
+    std::vector<MCItem> mc_items;
 };
 
 } //namespace pdf2htmlEX

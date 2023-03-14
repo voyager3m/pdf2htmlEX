@@ -125,6 +125,7 @@ set(PDF2HTMLEX_LIBS ${PDF2HTMLEX_LIBS}
   -lz
   -lm
   -lgobject-2.0
+  -ljsoncpp
 )
 
 # debug build flags (overwrite default cmake debug flags)
@@ -244,6 +245,8 @@ set(PDF2HTMLEX_SRC ${PDF2HTMLEX_SRC}
     src/TmpFiles.cc
     src/OutlineRec.h
     src/OutlineRec.cc
+    src/MCItem.h
+    src/MCItem.cc
     )
 
 add_executable(pdf2htmlEX ${PDF2HTMLEX_SRC})

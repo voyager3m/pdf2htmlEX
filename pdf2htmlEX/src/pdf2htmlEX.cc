@@ -215,6 +215,7 @@ void parse_options (int argc, char **argv)
         .add("quiet", &param.quiet, 0, "perform operations quietly")
         .add("memstat", &param.memstat, 1, "add memstat information to output")
         .add("no_ref", &param.disable_ref, 1, "disable reference output to html file")
+        .add("tags", &param.tags, 0, "parse tags (marked content) and save to tags.json file")
 
         // meta
         .add("version,v", "print copyright and version info", &show_version_and_exit)
@@ -505,6 +506,9 @@ int main(int argc, char **argv)
 
         unique_ptr<HTMLRenderer> renderer(new HTMLRenderer(argv[0], param));
         renderer->process(doc.get());
+        if (param.tags > 0) {
+          renderer->dump_tags("tags.json");
+        }
         renderer->dump();
 
         finished = true;
